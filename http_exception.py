@@ -1,0 +1,2 @@
+class HttpParserException(Exception):
+    pass
