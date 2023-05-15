@@ -21,7 +21,11 @@ class TPWF:
     @staticmethod
     def route_request(request: HttpRequest) -> str:
         route = request.route
+        # TODO: User request.http_method to find the handler function
         handler_func = TPWF.function_to_url.get(route)
         if not handler_func:  # Handle this properly with HTTP 404
             return ""
+        # TODO: How to pass request to the handler function
+        #   1. Pass request object in the handler function
+        #   2. Or build a context like in Flask - A Thread local context ???
         return handler_func()
