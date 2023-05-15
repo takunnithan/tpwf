@@ -2,6 +2,8 @@ import socket
 import time
 import threading
 from http_parser import HttpParser
+from tpwf import TPWF
+from http_response import HttpResponse
 
 
 def connection_handler(client_socket, client_address):
@@ -10,16 +12,15 @@ def connection_handler(client_socket, client_address):
 
     # Receive the request data from the client
     connection_data = client_socket.recv(1024).decode('utf-8')
-    # print(f"Received request:\n{connection_data}")
 
     http_request = HttpParser.parse(connection_data)
     print("============================")
     print(http_request)
     print("============================")
 
-    # Send a response back to the client
-    response = "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\n\r\nHello, world!"
-    client_socket.sendall(response.encode('utf-8'))
+    data = TPWF.route_request(http_request)
+    response = HttpResponse(data)
+    client_socket.sendall(response.to_bytes())
 
     # Close the client socket
     client_socket.close()
@@ -29,6 +30,7 @@ def run():
 
     server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
+    # TODO: This should be customizable from a config file / from the TPWF class
     host = '127.0.0.1'
     port = 9000
 
@@ -43,6 +45,24 @@ def run():
         # TODO: Async (Event loop) ?
         thread = threading.Thread(target=connection_handler, args=(client_socket, client_address), daemon=True)
         thread.start()
+
+
+app = TPWF()
+
+
+@app.get("/")
+def hello_world():
+    return "Hello World!, I am at the top of the world"
+
+
+@app.get("/hello")
+def hello_world():
+    return "This is World!!!"
+
+
+@app.get("/world")
+def hello_world():
+    return "This is Hello!!!"
 
 
 if __name__ == "__main__":
