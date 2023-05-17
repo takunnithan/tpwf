@@ -21,8 +21,16 @@ class HttpParser:
 
     @staticmethod
     def parse(connection_data: str) -> HttpRequest:
-        """"
+        """
             TODO: Write a HTTP parser for this - Preferably a Class with helper functions etc
+
+
+            TODO:
+                -------------------------------------------------------------------------------------------
+                1. Parse all Headers -> There must be a way to know when the headers end - MSDN
+                2. Support for POST, PATCH, PUT
+                3. Parse request body ( handling encoding, content-type( Text, Image, File, Json, Form, ??? )
+                -------------------------------------------------------------------------------------------
 
             GET / HTTP/1.1
             Host: localhost:8000

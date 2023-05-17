@@ -1,9 +1,9 @@
 import socket
-import time
 import threading
+
 from http_parser import HttpParser
-from tpwf import TPWF
 from http_response import HttpResponse
+from tpwf import TPWF
 
 
 def connection_handler(client_socket, client_address):
@@ -18,9 +18,12 @@ def connection_handler(client_socket, client_address):
     print(http_request)
     print("============================")
 
-    data = TPWF.route_request(http_request)
-    response = HttpResponse(data)
-    client_socket.sendall(response.to_bytes())
+    response_from_user = TPWF.route_request(http_request)
+    if isinstance(response_from_user, HttpResponse):
+        http_response = response_from_user.to_bytes()
+    else:
+        http_response = HttpResponse(response_from_user).to_bytes()
+    client_socket.sendall(http_response)
 
     # Close the client socket
     client_socket.close()
@@ -63,6 +66,16 @@ def hello_world():
 @app.get("/world")
 def hello_world():
     return "This is Hello!!!"
+
+
+@app.get("/test")
+def hello_world():
+    return HttpResponse("This is a test message", 200)
+
+
+@app.get("/test1")
+def hello_world():
+    return HttpResponse("This is a test1 message", 201, {"Content-Type": "text/plain", "Random-Header": "Random value"})
 
 
 if __name__ == "__main__":

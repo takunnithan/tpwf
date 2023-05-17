@@ -17,3 +17,10 @@ HTTP_VERBS = {
     "OPTION": "OPTION",
     "PATCH": "PATCH"
 }
+
+
+# CONTENT_TYPES
+TEXT_PLAIN = "text/plain"
+TEXT_JSON = "text/json"
+TEXT_HTML = "text/html"
+
