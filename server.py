@@ -12,11 +12,15 @@ def connection_handler(client_socket, client_address):
 
     # Receive the request data from the client
     connection_data = client_socket.recv(1024).decode('utf-8')
+    # connection_data = client_socket.recv(1024)
+    # print("============================")
+    # print(connection_data)
+    # print("============================")
 
     http_request = HttpParser.parse(connection_data)
-    print("============================")
-    print(http_request)
-    print("============================")
+    # print("============================")
+    # print(http_request)
+    # print("============================")
 
     response_from_user = TPWF.route_request(http_request)
     if isinstance(response_from_user, HttpResponse):
@@ -81,6 +85,11 @@ def hello_world():
 if __name__ == "__main__":
     run()
 
+# TODO:
+#   Create a list of features for V1 - Freeze it
+#   Add new features later - Move on to other projects and come back to this whenever feel like it.
+
+
 
 # TODO:
 #   1. Handler with threads ( Thread pool / Queue requests if they exceed )
@@ -91,7 +100,7 @@ if __name__ == "__main__":
 #       1. __init__, to_bytes(), etc
 #   5. More features
 #       1. Middleware support ( Auth, session , etc - A Generic way ) - Registering like routes with Decorator
-#           - Hooking functions along the way - they all return return a request / response object
+#           - Hooking functions along the way - they all return a request / response object
 #       2. Session , Cookie support
 #       3. Templating - Jinja or something - Don't build it - use existing
 #   6. Take inspiration from Flask & Django
