@@ -3,7 +3,6 @@ Create a base class with common functions
 - Have different types of responses
     - Http
     - Template
-    - Json
     - ?????
 """
 import http_status

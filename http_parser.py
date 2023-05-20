@@ -6,6 +6,12 @@ from http_exception import HttpParserException
 class HttpParser:
 
     @staticmethod
+    def _parse_start_line(data_string: str):
+        http_verb = HttpParser._parse_http_verb(data_string)
+        route = HttpParser._parse_route(data_string)
+        return http_verb, route
+
+    @staticmethod
     def _parse_http_verb(data_string: str) -> str:
         """ Parsing `GET / HTTP/1.1` """
         values = data_string.split(" ")
@@ -20,38 +26,64 @@ class HttpParser:
         return values[1]
 
     @staticmethod
+    def _parse_http_request_body(data_string: str | list, content_type: str):
+        """ Parse body from a Http request."""
+        if content_type.startswith("text"):
+            body = ""
+            for line in data_string:
+                body += line.strip() + "\n"
+            return body
+        elif content_type == "application/x-www-form-urlencoded":
+            key_value_pairs = data_string[0].strip().split("&")
+            key_value_dict = {}
+            for key_value in key_value_pairs:
+                items = key_value.split("=")
+                key_value_dict[items[0]] = items[1]
+            return key_value_dict
+        elif content_type.startswith("multipart/form-data"):
+            boundary = content_type.split("=")[1].strip()
+            form_items = {}
+            key, value = None, None
+            for line in data_string[1:]:
+                if boundary in line:
+                    form_items[key] = value
+                else:
+                    if "name" in line:
+                        key = line.split("=")[1].replace('"', '')
+                    else:
+                        value = line.strip()
+            return form_items
+
+        elif content_type.startswith("application"):
+            body = ""
+            for line in data_string:
+                body += line.strip()
+            return body
+
+        # TODO: Raise a HTTP 400 error here
+        raise HttpParserException(f"Unknown Content-Type {content_type}")
+
+    @staticmethod
     def parse(connection_data: str) -> HttpRequest:
         """
-            TODO: Write a HTTP parser for this - Preferably a Class with helper functions etc
-
-
             TODO:
-                -------------------------------------------------------------------------------------------
-                1. Parse all Headers -> There must be a way to know when the headers end - MSDN
-                2. Support for POST, PATCH, PUT
-                3. Parse request body ( handling encoding, content-type( Text, Image, File, Json, Form, ??? )
-                    Use postman to test different types of data.
-                    1. Handle - form-data, x-www.form-urlencoded, raw(text, plain, json, xml, html)
-                    2. Handle - binary - files
-                -------------------------------------------------------------------------------------------
+                2. Handle - binary - files
 
-            GET / HTTP/1.1
-            Host: localhost:8000
-            Connection: keep-alive
-            sec-ch-ua: "Google Chrome";v="113", "Chromium";v="113", "Not-A.Brand";v="24"
-            sec-ch-ua-mobile: ?0
-            sec-ch-ua-platform: "Windows"
-            Upgrade-Insecure-Requests: 1
-            User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/113.0.0.0 Safari/537.36
-            Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7
-            Sec-Fetch-Site: none
-            Sec-Fetch-Mode: navigate
-            Sec-Fetch-User: ?1
-            Sec-Fetch-Dest: document
-            Accept-Encoding: gzip, deflate, br
-            Accept-Language: en-IN,en-GB;q=0.9,en-US;q=0.8,en;q=0.7,ml;q=0.6
         """
-        connection_first_line = connection_data.split("\\n")[0]
-        http_method = HttpParser._parse_http_verb(connection_first_line)
-        route = HttpParser._parse_route(connection_first_line)
-        return HttpRequest(http_method, route)
+        http_request_lines = connection_data.split("\r\n")
+        http_method, route = HttpParser._parse_start_line(http_request_lines[0])
+        http_headers = {}
+        body_start_index = 0
+        for index, line in enumerate(http_request_lines[1:], 1):
+            if not line:
+                body_start_index = index + 1
+                break
+            key_value = line.split(":")
+            http_headers[key_value[0]] = key_value[1].strip()
+        http_body = None
+        if "Content-Type" in http_headers:
+            http_body = HttpParser._parse_http_request_body(
+                http_request_lines[body_start_index:],
+                http_headers["Content-Type"]
+            )
+        return HttpRequest(http_method, route, http_headers, http_body)
